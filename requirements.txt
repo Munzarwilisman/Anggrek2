@@ -3,4 +3,3 @@ pandas
 plotly
 streamlit-option-menu
 openpyxl
-pickle5
