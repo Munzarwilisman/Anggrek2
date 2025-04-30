@@ -128,7 +128,6 @@ elif selected == "Performance Indikator":
 
     columns = df.select_dtypes(include=['number']).columns.tolist()
 
-    # Menggunakan selectbox untuk pemilihan parameter
     selected_param = st.selectbox(
         "Pilih Parameter:",
         options=columns,
@@ -137,7 +136,6 @@ elif selected == "Performance Indikator":
         help="Pilih parameter yang ingin dianalisis dari daftar"
     )
 
-    # Tambahkan efek visual lainnya jika diperlukan
     st.markdown(f"**Parameter yang dipilih**: {selected_param}")
 
     date_column = None
@@ -164,30 +162,23 @@ elif selected == "Performance Indikator":
 
     st.markdown("### 📉 Grafik Tren")
 
-    # Menampilkan color picker dan slider transparansi berdampingan
-    col1, col2, col3 = st.columns([1, 2, 3])
+    # Color picker dan slider transparansi sejajar
+    with st.container():
+        col1, col2, col3 = st.columns([1.5, 1.5, 3])
+        with col1:
+            line_color = st.color_picker("Warna Garis", value="#1f77b4")
+        with col2:
+            fill_color = st.color_picker("Warna Bayangan", value="#add8e6")
+        with col3:
+            opacity = st.slider("Transparansi Bayangan (%)", 0, 100, 50)
 
-    with col1:
-        # Pemilihan warna garis tren
-        line_color = st.color_picker("Pilih Warna Garis Tren:", value='#1f77b4')  # Default: biru
-    with col2:
-        # Pemilihan warna bayangan
-        fill_color = st.color_picker("Pilih Warna Bayangan:", value='#add8e6')  # Default: light blue
-    with col3:
-        # Slider transparansi bayangan
-        opacity = st.slider("Transparansi Bayangan", min_value=0, max_value=100, value=50, step=1)
-
-    # Menyesuaikan transparansi bayangan berdasarkan slider (dalam format rgba)
     opacity = opacity / 100
     fig_line = px.line(df, x='Month' if date_column else df.index, y=selected_param)
-
-    # Menambahkan bayangan pada area di bawah grafik tren dengan warna dan transparansi yang dipilih
     fig_line.update_traces(
-        line=dict(color=line_color),
+        line=dict(color=line_color, shape="spline"),
         fill='tozeroy',
         fillcolor=f'rgba{tuple([int(fill_color[1:3], 16), int(fill_color[3:5], 16), int(fill_color[5:7], 16), opacity])}'
     )
-
     st.plotly_chart(fig_line, use_container_width=True)
 
     st.markdown("### 📊 Histogram")
