@@ -127,7 +127,18 @@ elif selected == "Performance Indikator":
     st.session_state.df = df
 
     columns = df.select_dtypes(include=['number']).columns.tolist()
-    selected_param = st.radio("Pilih Parameter:", columns, horizontal=True)
+
+    # Menggunakan selectbox untuk pemilihan parameter
+    selected_param = st.selectbox(
+        "Pilih Parameter:",
+        options=columns,
+        index=0,
+        key="param_selectbox",
+        help="Pilih parameter yang ingin dianalisis dari daftar"
+    )
+
+    # Tambahkan efek visual lainnya jika diperlukan
+    st.markdown(f"**Parameter yang dipilih**: {selected_param}")
 
     date_column = None
     for col in df.columns:
@@ -152,7 +163,31 @@ elif selected == "Performance Indikator":
     col5.metric("Max", f"{max_val:.2f}")
 
     st.markdown("### 📉 Grafik Tren")
+
+    # Menampilkan color picker dan slider transparansi berdampingan
+    col1, col2, col3 = st.columns([1, 2, 3])
+
+    with col1:
+        # Pemilihan warna garis tren
+        line_color = st.color_picker("Pilih Warna Garis Tren:", value='#1f77b4')  # Default: biru
+    with col2:
+        # Pemilihan warna bayangan
+        fill_color = st.color_picker("Pilih Warna Bayangan:", value='#add8e6')  # Default: light blue
+    with col3:
+        # Slider transparansi bayangan
+        opacity = st.slider("Transparansi Bayangan", min_value=0, max_value=100, value=50, step=1)
+
+    # Menyesuaikan transparansi bayangan berdasarkan slider (dalam format rgba)
+    opacity = opacity / 100
     fig_line = px.line(df, x='Month' if date_column else df.index, y=selected_param)
+
+    # Menambahkan bayangan pada area di bawah grafik tren dengan warna dan transparansi yang dipilih
+    fig_line.update_traces(
+        line=dict(color=line_color),
+        fill='tozeroy',
+        fillcolor=f'rgba{tuple([int(fill_color[1:3], 16), int(fill_color[3:5], 16), int(fill_color[5:7], 16), opacity])}'
+    )
+
     st.plotly_chart(fig_line, use_container_width=True)
 
     st.markdown("### 📊 Histogram")
