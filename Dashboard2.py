@@ -128,6 +128,7 @@ elif selected == "Performance Indikator":
 
     columns = df.select_dtypes(include=['number']).columns.tolist()
 
+    # Menggunakan selectbox untuk pemilihan parameter
     selected_param = st.selectbox(
         "Pilih Parameter:",
         options=columns,
@@ -136,6 +137,7 @@ elif selected == "Performance Indikator":
         help="Pilih parameter yang ingin dianalisis dari daftar"
     )
 
+    # Tambahkan efek visual lainnya jika diperlukan
     st.markdown(f"**Parameter yang dipilih**: {selected_param}")
 
     date_column = None
@@ -146,39 +148,47 @@ elif selected == "Performance Indikator":
             df['Month'] = df[date_column].dt.strftime('%b %Y')
             break
 
-    st.subheader(f"📈 Statistik: {selected_param}")
-    mean = df[selected_param].mean()
-    median = df[selected_param].median()
-    std = df[selected_param].std()
-    min_val = df[selected_param].min()
-    max_val = df[selected_param].max()
+    st.markdown("### 📋 Tabel Statistik Lengkap")
+    describe_df = df[selected_param].describe().to_frame()
+    describe_df.columns = ["Nilai Statistik"]
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("Mean", f"{mean:.2f}")
-    col2.metric("Median", f"{median:.2f}")
-    col3.metric("Std Dev", f"{std:.2f}")
-    col4.metric("Min", f"{min_val:.2f}")
-    col5.metric("Max", f"{max_val:.2f}")
+    # Tambahkan baris total
+    total_val = df[selected_param].sum()
+    describe_df.loc["Total"] = total_val
+
+    # Transpose untuk menampilkan tabel secara horizontal
+    describe_df_transposed = describe_df.T
+
+    # Tampilkan tabel dengan format dua angka di belakang koma
+    st.dataframe(describe_df_transposed.style.format("{:.2f}"))
 
     st.markdown("### 📉 Grafik Tren")
 
-    # Color picker dan slider transparansi sejajar
-    with st.container():
-        col1, col2, col3 = st.columns([1.5, 1.5, 3])
-        with col1:
-            line_color = st.color_picker("Warna Garis", value="#1f77b4")
-        with col2:
-            fill_color = st.color_picker("Warna Bayangan", value="#add8e6")
-        with col3:
-            opacity = st.slider("Transparansi Bayangan (%)", 0, 100, 50)
+    # Menampilkan color picker dan slider transparansi berdampingan
+    col1, col2, col3 = st.columns([1, 1, 2])  # Menyesuaikan pembagian kolom
 
+    with col1:
+        # Pemilihan warna garis tren
+        line_color = st.color_picker("Pilih Warna Garis Tren:", value='#1f77b4')  # Default: biru
+    with col2:
+        # Pemilihan warna bayangan
+        fill_color = st.color_picker("Pilih Warna Bayangan:", value='#add8e6')  # Default: light blue
+    with col3:
+        # Slider transparansi bayangan
+        opacity = st.slider("Transparansi Bayangan", min_value=0, max_value=100, value=50, step=1)
+
+    # Menyesuaikan transparansi bayangan berdasarkan slider (dalam format rgba)
     opacity = opacity / 100
     fig_line = px.line(df, x='Month' if date_column else df.index, y=selected_param)
+
+    # Mengupdate grafik agar menggunakan spline untuk garis yang lebih halus
     fig_line.update_traces(
-        line=dict(color=line_color, shape="spline"),
+        line=dict(color=line_color),
         fill='tozeroy',
-        fillcolor=f'rgba{tuple([int(fill_color[1:3], 16), int(fill_color[3:5], 16), int(fill_color[5:7], 16), opacity])}'
+        fillcolor=f'rgba{tuple([int(fill_color[1:3], 16), int(fill_color[3:5], 16), int(fill_color[5:7], 16), opacity])}',
+        line_shape='spline'  # Menggunakan spline untuk membuat garis lebih halus
     )
+
     st.plotly_chart(fig_line, use_container_width=True)
 
     st.markdown("### 📊 Histogram")
@@ -189,6 +199,12 @@ elif selected == "Performance Indikator":
 
     st.markdown("### 🧠 Ringkasan Otomatis")
     recent = df.sort_values(by=date_column).iloc[-5:] if date_column else df.iloc[-5:]
+    mean = recent[selected_param].mean()
+    median = recent[selected_param].median()
+    std = recent[selected_param].std()
+    min_val = recent[selected_param].min()
+    max_val = recent[selected_param].max()
+
     if recent[selected_param].is_monotonic_increasing:
         trend = "Nilai parameter menunjukkan **tren meningkat**."
     elif recent[selected_param].is_monotonic_decreasing:
@@ -201,9 +217,12 @@ elif selected == "Performance Indikator":
 # Halaman Kesiapan Peralatan
 elif selected == "Kesiapan Peralatan":
     st.title("🔧 Kesiapan Peralatan PLTU ANGGREK")
-    sheet_id = "1vh_3k_6uacjs96Bpr9ap_gQ-6T3CF-xQfFYt2AuSNvo"
+    
+    # Menampilkan iframe Google Spreadsheet langsung dalam aplikasi
     st.markdown(
-        f'<iframe src="https://docs.google.com/spreadsheets/d/{sheet_id}/embed" width="100%" height="600"></iframe>',
+        f'<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRwTlJ2bTomQk6X5deTReoGgXdJXFoTFaEjuswOn3LZTn0o5pf0iwurorucaHjdYUNrFRSDQPt1u3mX/pubhtml?gid=550505157&single=true" width="100%" height="800"></iframe>',
         unsafe_allow_html=True
     )
-    st.markdown(f"[📄 Buka Google Sheet di tab baru](https://docs.google.com/spreadsheets/d/{sheet_id}/edit)")
+    
+    # Link untuk membuka Google Sheet di tab baru jika diperlukan
+    st.markdown(f"[📄 Buka Google Sheet di tab baru](https://docs.google.com/spreadsheets/d/e/2PACX-1vRwTlJ2bTomQk6X5deTReoGgXdJXFoTFaEjuswOn3LZTn0o5pf0iwurorucaHjdYUNrFRSDQPt1u3mX/edit)")
